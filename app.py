@@ -1,13 +1,11 @@
 import streamlit as st
 
-# Cấu hình giao diện mobile tối ưu thu gọn
 st.set_page_config(
     page_title="Bot Tín Hiệu Siêu Tốc",
     page_icon="🤖",
     layout="centered"
 )
 
-# CSS tùy chỉnh giao diện gọn gàng, nút checkbox và thu nhỏ roadmap
 st.markdown("""
     <style>
         .block-container {
@@ -23,7 +21,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Khởi tạo trạng thái phiên làm việc
+# Khởi tạo Session State
 if 'history_duong' not in st.session_state:
     st.session_state.history_duong = []
 if 'history_am' not in st.session_state:
@@ -34,8 +32,8 @@ if 'nhip_am' not in st.session_state:
     st.session_state.nhip_am = {'an': 0, 'gay': 0}
 if 'logs' not in st.session_state:
     st.session_state.logs = []
-if 'last_so' not in st.session_state:
-    st.session_state.last_so = "--"
+if 'clear_input' not in st.session_state:
+    st.session_state.clear_input = False
 
 # ================= CÁC HÀM LOGIC =================
 def tinh_bong_duong(so_de):
@@ -59,7 +57,6 @@ def phan_tich_chien_thuat(an, gay):
     else:
         return "⏳ Chờ nhịp...", "gray"
 
-# Hàm tạo ma trận lưới cho Roadmap siêu nhỏ (bằng 1/2 hiện tại)
 def hien_thi_roadmap_html(history, title):
     st.markdown(f"<span style='font-size: 0.75rem; font-weight: bold;'>📊 {title}</span>", unsafe_allow_html=True)
     max_rows = 6
@@ -95,7 +92,6 @@ def hien_thi_roadmap_html(history, title):
     max_col = max([col for col, row in grid.keys()]) if grid else 0
     max_cols_display = max(10, max_col + 1)
     
-    # Ô chấm siêu nhỏ bằng 1/2 (kích thước ô 10px thay vì 16-22px)
     html_content = "<div style='overflow-x: auto; background-color: #2d2d2d; padding: 2px; border-radius: 4px;'><table style='border-collapse: collapse; margin: auto;'>"
     for r in range(6):
         html_content += "<tr>"
@@ -115,61 +111,77 @@ def hien_thi_roadmap_html(history, title):
 # ================= GIAO DIỆN CHÍNH =================
 st.markdown("<h2>🤖 Bot Tín Hiệu Siêu Tốc</h2>", unsafe_allow_html=True)
 
-# 1. Ô nhập liệu ĐB Kỳ trước
-so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", max_chars=2, placeholder="VD: 43")
+# Xử lý làm trống ô nhập liệu sau khi chốt
+default_val = "" if st.session_state.clear_input else ""
+st.session_state.clear_input = False
 
-# Tính toán kết quả ngay khi có số để hiển thị ngay dưới
+so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", value=default_val, max_chars=2, placeholder="VD: 26")
+
+# Tính toán giá trị dự kiến
 if len(so_de) == 2 and so_de.isdigit():
-    d1, d2 = tinh_bong_duong(so_de)
-    a1, a2 = tinh_bong_am(so_de)
+    d1_pre, d2_pre = tinh_bong_duong(so_de)
+    a1_pre, a2_pre = tinh_bong_am(so_de)
+    preview_mode = True
 else:
-    d1, d2, a1, a2 = "--", "--", "--", "--"
+    d1_pre, d2_pre, a1_pre, a2_pre = "--", "--", "--", "--"
+    preview_mode = False
 
-# 2. Hiển thị Bóng Dương, Bóng Âm ngay dưới ĐB Kỳ trước, có nút Húp nằm chung hàng
+# Hiển thị Bóng Dương, Bóng Âm và nút Húp chung 1 hàng
 col_d, col_a = st.columns(2)
 
 with col_d:
-    st.markdown(f"🔵 **B.Dương: {d1}, {d2}**")
+    st.markdown(f"🔵 **B.Dương: {d1_pre}, {d2_pre}**")
     th_d, color_d = phan_tich_chien_thuat(st.session_state.nhip_duong['an'], st.session_state.nhip_duong['gay'])
     st.markdown(f":{color_d}[{th_d}] (Ăn:{st.session_state.nhip_duong['an']}|Gãy:{st.session_state.nhip_duong['gay']})")
     win_duong = st.checkbox("Húp Dương 💰")
 
 with col_a:
-    st.markdown(f"🟠 **B.Âm: {a1}, {a2}**")
+    st.markdown(f"🟠 **B.Âm: {a1_pre}, {a2_pre}**")
     th_a, color_a = phan_tich_chien_thuat(st.session_state.nhip_am['an'], st.session_state.nhip_am['gay'])
     st.markdown(f":{color_a}[{th_a}] (Ăn:{st.session_state.nhip_am['an']}|Gãy:{st.session_state.nhip_am['gay']})")
     win_am = st.checkbox("Húp Âm 💰")
 
-# 3. Nút Chốt số nằm dưới cùng sau các phần trên
+if preview_mode:
+    st.markdown(f"<div style='font-size: 0.75rem; color: #00ffcc; text-align: center;'>👉 Đã nhận số {so_de}. Tích chọn 'Húp' rồi bấm nút Chốt số bên dưới để ghi nhận!</div>", unsafe_allow_html=True)
+
+# Nút Chốt số chính thức
 if st.button("⚡ CHỐT SỐ & CẬP NHẬT KỲ MỚI", use_container_width=True):
     if len(so_de) != 2 or not so_de.isdigit():
         st.warning("Vui lòng nhập đúng 2 chữ số!")
     else:
-        st.session_state.last_so = so_de
+        # Cập nhật nhịp bóng dương
         if win_duong:
             st.session_state.nhip_duong['an'] += 1
             st.session_state.nhip_duong['gay'] = 0
             st.session_state.history_duong.append(True)
+            status_d_str = "win"
         else:
             st.session_state.nhip_duong['an'] = 0
             st.session_state.nhip_duong['gay'] += 1
             st.session_state.history_duong.append(False)
+            status_d_str = "lose"
             
+        # Cập nhật nhịp bóng âm
         if win_am:
             st.session_state.nhip_am['an'] += 1
             st.session_state.nhip_am['gay'] = 0
             st.session_state.history_am.append(True)
+            status_a_str = "win"
         else:
             st.session_state.nhip_am['an'] = 0
             st.session_state.nhip_am['gay'] += 1
             st.session_state.history_am.append(False)
+            status_a_str = "lose"
             
-        status_d = "WIN" if win_duong else "LOSE"
-        status_a = "WIN" if win_am else "LOSE"
-        st.session_state.logs.insert(0, f"Kỳ {so_de} ➔ D:{status_d} | A:{status_a}")
+        # Ghi log chuẩn định dạng yêu cầu
+        log_entry = f"số {so_de} - b.am:{a1_pre}-{a2_pre} - {status_a_str} - b.duong:{d1_pre}-{d2_pre} - {status_d_str}"
+        st.session_state.logs.insert(0, log_entry)
+        
+        # Bật cờ để làm trống ô nhập liệu và reset lại trang
+        st.session_state.clear_input = True
         st.rerun()
 
-# 4. Roadmap thu nhỏ bằng 1/2
+# Roadmap thu nhỏ
 st.markdown("<hr style='margin: 3px 0px;'>", unsafe_allow_html=True)
 r_col1, r_col2 = st.columns(2)
 with r_col1:
@@ -177,12 +189,12 @@ with r_col1:
 with r_col2:
     hien_thi_roadmap_html(st.session_state.history_am, "ROADMAP BÓNG ÂM")
 
-# 5. Gấp thếp & Nhật ký hoạt động thu gọn
+# Gấp thếp & Nhật ký hoạt động
 st.markdown("<div style='font-size: 0.7rem; color: #ffcc00; text-align: center; margin-top: 3px;'>💡 Gấp thếp: 1k-3k-7k-16k-35k-70k-150k</div>", unsafe_allow_html=True)
 
 st.markdown("<span style='font-size: 0.75rem; font-weight: bold;'>📝 Nhật Ký Hoạt Động</span>", unsafe_allow_html=True)
 if st.session_state.logs:
-    log_text = " | ".join(st.session_state.logs[:4]) # Hiển thị gọn vài dòng mới nhất
-    st.markdown(f"<div style='font-size: 0.7rem; color: #aaaaaa; background-color: #222222; padding: 4px; border-radius: 4px;'>{log_text}</div>", unsafe_allow_html=True)
+    logs_html = "<br>".join([f"• {log}" for log in st.session_state.logs[:4]])
+    st.markdown(f"<div style='font-size: 0.7rem; color: #cccccc; background-color: #222222; padding: 5px; border-radius: 4px;'>{logs_html}</div>", unsafe_allow_html=True)
 else:
-    st.markdown("<div style='font-size: 0.7rem; color: #888888;'>Chưa có lịch sử.</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size: 0.7rem; color: #888888;'>Chưa có lịch sử chốt số.</div>", unsafe_allow_html=True)
