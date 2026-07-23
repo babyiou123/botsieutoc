@@ -108,7 +108,6 @@ def hien_thi_roadmap_html(history, title):
     html_content += "</table></div>"
     st.markdown(html_content, unsafe_allow_html=True)
 
-# Callback cập nhật giá trị input
 def update_input():
     st.session_state.input_val = st.session_state.txt_so_de
 
@@ -116,12 +115,10 @@ def update_input():
 st.markdown("<h2>🤖 Bot Tín Hiệu Siêu Tốc</h2>", unsafe_allow_html=True)
 
 # Ô nhập số ĐB Kỳ trước
-so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", max_chars=2, placeholder="VD: 54", key="txt_so_de", on_change=update_input)
-
-# Lấy giá trị thực tế từ biến state hoặc input
+so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", max_chars=2, placeholder="VD: 25", key="txt_so_de", on_change=update_input)
 current_so = st.session_state.input_val if st.session_state.input_val else so_de
 
-# Tính toán giá trị dự kiến ngay lập tức khi gõ
+# Tính toán giá trị dự kiến
 if len(current_so) == 2 and current_so.isdigit():
     d1_pre, d2_pre = tinh_bong_duong(current_so)
     a1_pre, a2_pre = tinh_bong_am(current_so)
@@ -130,31 +127,33 @@ else:
     d1_pre, d2_pre, a1_pre, a2_pre = "--", "--", "--", "--"
     preview_mode = False
 
-# Hiển thị Bóng Dương, Bóng Âm và nút Húp chung 1 hàng
+# Hiển thị Bóng Dương, Bóng Âm và dùng Radio thay cho Checkbox để tránh dính trạng thái
 col_d, col_a = st.columns(2)
 
 with col_d:
     st.markdown(f"🔵 **B.Dương: {d1_pre}, {d2_pre}**")
     th_d, color_d = phan_tich_chien_thuat(st.session_state.nhip_duong['an'], st.session_state.nhip_duong['gay'])
     st.markdown(f":{color_d}[{th_d}] (Ăn:{st.session_state.nhip_duong['an']}|Gãy:{st.session_state.nhip_duong['gay']})")
-    win_duong = st.checkbox("Húp Dương 💰", key="chk_duong")
+    choice_duong = st.radio("Chọn kết quả Dương:", ["⏳ Chưa chọn", "💰 Húp Dương", "❌ Gãy Dương"], horizontal=True, label_visibility="collapsed", key="radio_duong")
 
 with col_a:
     st.markdown(f"🟠 **B.Âm: {a1_pre}, {a2_pre}**")
     th_a, color_a = phan_tich_chien_thuat(st.session_state.nhip_am['an'], st.session_state.nhip_am['gay'])
     st.markdown(f":{color_a}[{th_a}] (Ăn:{st.session_state.nhip_am['an']}|Gãy:{st.session_state.nhip_am['gay']})")
-    win_am = st.checkbox("Húp Âm 💰", key="chk_am")
+    choice_am = st.radio("Chọn kết quả Âm:", ["⏳ Chưa chọn", "💰 Húp Âm", "❌ Gãy Âm"], horizontal=True, label_visibility="collapsed", key="radio_am")
 
 if preview_mode:
-    st.markdown(f"<div style='font-size: 0.75rem; color: #00ffcc; text-align: center;'>👉 Đã nhận số {current_so}. Tích chọn 'Húp' rồi bấm nút Chốt số bên dưới!</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='font-size: 0.75rem; color: #00ffcc; text-align: center;'>👉 Đã nhận số {current_so}. Chọn kết quả rồi bấm Chốt số bên dưới!</div>", unsafe_allow_html=True)
 
 # Nút Chốt số chính thức
 if st.button("⚡ CHỐT SỐ & CẬP NHẬT KỲ MỚI", use_container_width=True):
     if len(current_so) != 2 or not current_so.isdigit():
         st.warning("Vui lòng nhập đúng 2 chữ số!")
+    elif choice_duong == "⏳ Chưa chọn" or choice_am == "⏳ Chưa chọn":
+        st.warning("Vui lòng chọn kết quả Húp hoặc Gãy cho cả Bóng Dương và Bóng Âm!")
     else:
-        # Cập nhật nhịp bóng dương
-        if win_duong:
+        # Xử lý Bóng Dương
+        if choice_duong == "💰 Húp Dương":
             st.session_state.nhip_duong['an'] += 1
             st.session_state.nhip_duong['gay'] = 0
             st.session_state.history_duong.append(True)
@@ -165,8 +164,8 @@ if st.button("⚡ CHỐT SỐ & CẬP NHẬT KỲ MỚI", use_container_width=Tr
             st.session_state.history_duong.append(False)
             status_d_str = "lose"
             
-        # Cập nhật nhịp bóng âm
-        if win_am:
+        # Xử lý Bóng Âm
+        if choice_am == "💰 Húp Âm":
             st.session_state.nhip_am['an'] += 1
             st.session_state.nhip_am['gay'] = 0
             st.session_state.history_am.append(True)
@@ -181,9 +180,9 @@ if st.button("⚡ CHỐT SỐ & CẬP NHẬT KỲ MỚI", use_container_width=Tr
         log_entry = f"số {current_so} - b.am:{a1_pre}-{a2_pre} - {status_a_str} - b.duong:{d1_pre}-{d2_pre} - {status_d_str}"
         st.session_state.logs.insert(0, log_entry)
         
-        # Reset sạch sẽ ô input và xóa toàn bộ key widget để bỏ tick checkbox
+        # Reset sạch sẽ ô input và xóa key để trả radio về mặc định
         st.session_state.input_val = ""
-        for key in ['txt_so_de', 'chk_duong', 'chk_am']:
+        for key in ['txt_so_de', 'radio_duong', 'radio_am']:
             if key in st.session_state:
                 del st.session_state[key]
                 
