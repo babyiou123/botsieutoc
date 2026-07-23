@@ -7,7 +7,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# Khởi tạo trạng thái phiên làm việc (Session State) để lưu dữ liệu khi chuyển trang/tương tác
+# Khởi tạo trạng thái phiên làm việc (Session State)
 if 'history_duong' not in st.session_state:
     st.session_state.history_duong = []
 if 'history_am' not in st.session_state:
@@ -42,6 +42,63 @@ def phan_tich_chien_thuat(an, gay):
         return f"🚀 BÁM CẦU: Đu theo trend (Ăn thông {an} tay!)", "green"
     else:
         return "⏳ NGỒI NGOÀI: Cầu đang nhiễu, chờ nhịp rõ.", "gray"
+
+# Hàm tạo ma trận lưới cho Roadmap (Đường lớn)
+def tao_luoi_roadmap(history):
+    max_rows = 6
+    grid = {}
+    if history:
+        current_col = 0
+        current_row = 0
+        grid[(current_col, current_row)] = history[0]
+        
+        for i in range(1, len(history)):
+            prev_res = history[i-1]
+            curr_res = history[i]
+            
+            if curr_res == prev_res:
+                next_row = current_row + 1
+                next_col = current_col
+                
+                if next_row >= max_rows or (next_col, next_row) in grid:
+                    next_row = current_row
+                    next_col = current_col + 1
+                    
+                current_row = next_row
+                current_col = next_col
+            else:
+                next_col = 0
+                while (next_col, 0) in grid:
+                    next_col += 1
+                current_row = 0
+                current_col = next_col
+                
+            grid[(current_col, current_row)] = curr_res
+    return grid
+
+def hien_thi_roadmap_html(history, title, color_theme):
+    st.markdown(f"**📊 {title}**")
+    grid = tao_luoi_roadmap(history)
+    
+    max_col = max([col for col, row in grid.keys()]) if grid else 0
+    max_cols_display = max(15, max_col + 1)
+    
+    # Tạo bảng hiển thị dạng HTML đơn giản gọn nhẹ cho điện thoại
+    html_content = "<div style='overflow-x: auto; background-color: #2d2d2d; padding: 10px; border-radius: 8px;'><table style='border-collapse: collapse; margin: auto;'>"
+    for r in range(6):
+        html_content += "<tr>"
+        for c in range(max_cols_display):
+            val = grid.get((c, r), None)
+            if val is True:
+                dot = "<div style='width: 14px; height: 14px; background-color: #00ff00; border-radius: 50%; margin: 2px;'></div>"
+            elif val is False:
+                dot = "<div style='width: 14px; height: 14px; background-color: #ff4d4d; border-radius: 50%; margin: 2px;'></div>"
+            else:
+                dot = "<div style='width: 14px; height: 14px; background-color: #3d3d3d; border-radius: 50%; margin: 2px;'></div>"
+            html_content += f"<td style='border: 1px solid #3d3d3d; width: 22px; height: 22px; text-align: center;'>{dot}</td>"
+        html_content += "</tr>"
+    html_content += "</table></div>"
+    st.markdown(html_content, unsafe_allow_html=True)
 
 # ================= GIAO DIỆN WEB =================
 st.markdown("<h2 style='text-align: center; color: #4da6ff;'>🤖 Bot Tín Hiệu Siêu Tốc</h2>", unsafe_allow_html=True)
@@ -103,10 +160,17 @@ if len(so_de) == 2 and so_de.isdigit():
 st.markdown("---")
 st.info("💡 **Lộ trình gấp thếp gợi ý:** 1k - 3k - 7k - 16k - 35k - 70k - 150k")
 
+# Hiển thị Roadmap Đường Lớn
+st.markdown("---")
+hien_thi_roadmap_html(st.session_state.history_duong, "ĐƯỜNG LỚN BÓNG DƯƠNG", "#4da6ff")
+st.markdown("")
+hien_thi_roadmap_html(st.session_state.history_am, "ĐƯỜNG LỚN BÓNG ÂM", "#ff9900")
+
 # Hiển thị Nhật ký
+st.markdown("---")
 st.markdown("### 📝 Nhật Ký Hoạt Động")
 if st.session_state.logs:
-    for log in st.session_state.logs[:10]: # Hiển thị 10 log gần nhất
+    for log in st.session_state.logs[:10]:
         st.text(log)
 else:
     st.text("Chưa có lịch sử hoạt động.")
