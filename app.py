@@ -34,6 +34,8 @@ if 'logs' not in st.session_state:
     st.session_state.logs = []
 if 'form_key' not in st.session_state:
     st.session_state.form_key = 0
+if 'input_val' not in st.session_state:
+    st.session_state.input_val = ""
 
 # ================= CÁC HÀM LOGIC =================
 def tinh_bong_duong(so_de):
@@ -108,42 +110,54 @@ def hien_thi_roadmap_html(history, title):
     html_content += "</table></div>"
     st.markdown(html_content, unsafe_allow_html=True)
 
+def update_input():
+    st.session_state.input_val = st.session_state.txt_so_de
+
 # ================= GIAO DIỆN CHÍNH =================
 st.markdown("<h2>🤖 Bot Tín Hiệu Siêu Tốc</h2>", unsafe_allow_html=True)
 
-# Sử dụng st.form với dynamic key để khi submit form sẽ tự động clear sạch ô input và bỏ stick hoàn toàn
-with st.form(key=f"main_form_{st.session_state.form_key}"):
-    so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", max_chars=2, placeholder="VD: 65")
-    
-    # Tính toán kết quả dự kiến hiển thị ngay
-    if len(so_de) == 2 and so_de.isdigit():
-        d1_pre, d2_pre = tinh_bong_duong(so_de)
-        a1_pre, a2_pre = tinh_bong_am(so_de)
-    else:
-        d1_pre, d2_pre, a1_pre, a2_pre = "--", "--", "--", "--"
+# ----------------- Ô TRÊN: NHẬP SỐ & XEM KẾT QUẢ NGAY -----------------
+st.markdown("<div style='border: 1px solid #dcdcdc; padding: 10px; border-radius: 8px; margin-bottom: 8px;'>", unsafe_allow_html=True)
+so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", value=st.session_state.input_val, max_chars=2, placeholder="VD: 43", key="txt_so_de", on_change=update_input)
+current_so = st.session_state.input_val if st.session_state.input_val else so_de
 
-    col_d, col_a = st.columns(2)
-    with col_d:
-        st.markdown(f"🔵 **B.Dương: {d1_pre}, {d2_pre}**")
-        th_d, color_d = phan_tich_chien_thuat(st.session_state.nhip_duong['an'], st.session_state.nhip_duong['gay'])
-        st.markdown(f":{color_d}[{th_d}] (Ăn:{st.session_state.nhip_duong['an']}|Gãy:{st.session_state.nhip_duong['gay']})")
+if len(current_so) == 2 and current_so.isdigit():
+    d1_pre, d2_pre = tinh_bong_duong(current_so)
+    a1_pre, a2_pre = tinh_bong_am(current_so)
+else:
+    d1_pre, d2_pre, a1_pre, a2_pre = "--", "--", "--", "--"
+
+col_d, col_a = st.columns(2)
+with col_d:
+    st.markdown(f"🔵 **B.Dương: {d1_pre}, {d2_pre}**")
+    th_d, color_d = phan_tich_chien_thuat(st.session_state.nhip_duong['an'], st.session_state.nhip_duong['gay'])
+    st.markdown(f":{color_d}[{th_d}] (Ăn:{st.session_state.nhip_duong['an']}|Gãy:{st.session_state.nhip_duong['gay']})")
+
+with col_a:
+    st.markdown(f"🟠 **B.Âm: {a1_pre}, {a2_pre}**")
+    th_a, color_a = phan_tich_chien_thuat(st.session_state.nhip_am['an'], st.session_state.nhip_am['gay'])
+    st.markdown(f":{color_a}[{th_a}] (Ăn:{st.session_state.nhip_am['an']}|Gãy:{st.session_state.nhip_am['gay']})")
+st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ----------------- Ô DƯỚI: CHECKBOX & NÚT CHỐT (DÙNG FORM ĐỂ RESET SẠCH) -----------------
+st.markdown("<div style='border: 1px solid #dcdcdc; padding: 10px; border-radius: 8px;'>", unsafe_allow_html=True)
+with st.form(key=f"chot_form_{st.session_state.form_key}", clear_on_submit=True):
+    f_col1, f_col2 = st.columns(2)
+    with f_col1:
         win_duong = st.checkbox("Húp Dương 💰")
-
-    with col_a:
-        st.markdown(f"🟠 **B.Âm: {a1_pre}, {a2_pre}**")
-        th_a, color_a = phan_tich_chien_thuat(st.session_state.nhip_am['an'], st.session_state.nhip_am['gay'])
-        st.markdown(f":{color_a}[{th_a}] (Ăn:{st.session_state.nhip_am['an']}|Gãy:{st.session_state.nhip_am['gay']})")
+    with f_col2:
         win_am = st.checkbox("Húp Âm 💰")
-
+        
     submit_btn = st.form_submit_button(label="⚡ CHỐT SỐ & CẬP NHẬT KỲ MỚI", use_container_width=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
+
+# Xử lý logic khi bấm nút Chốt ở ô dưới
 if submit_btn:
-    if len(so_de) != 2 or not so_de.isdigit():
-        st.warning("Vui lòng nhập đúng 2 chữ số!")
+    if len(current_so) != 2 or not current_so.isdigit():
+        st.warning("Vui lòng nhập đủ 2 chữ số ĐB Kỳ trước ở ô trên!")
     else:
-        d1_pre, d2_pre = tinh_bong_duong(so_de)
-        a1_pre, a2_pre = tinh_bong_am(so_de)
-
         # Cập nhật nhịp bóng dương
         if win_duong:
             st.session_state.nhip_duong['an'] += 1
@@ -169,10 +183,13 @@ if submit_btn:
             status_a_str = "lose"
             
         # Ghi log chuẩn định dạng yêu cầu
-        log_entry = f"số {so_de} - b.am:{a1_pre}-{a2_pre} - {status_a_str} - b.duong:{d1_pre}-{d2_pre} - {status_d_str}"
+        log_entry = f"số {current_so} - b.am:{a1_pre}-{a2_pre} - {status_a_str} - b.duong:{d1_pre}-{d2_pre} - {status_d_str}"
         st.session_state.logs.insert(0, log_entry)
         
-        # Đổi form key để reset sạch form (xóa số và bỏ stick 100%)
+        # Reset sạch ô số ở trên và đổi key form để bỏ stick 100%
+        st.session_state.input_val = ""
+        if 'txt_so_de' in st.session_state:
+            del st.session_state['txt_so_de']
         st.session_state.form_key += 1
         st.rerun()
 
