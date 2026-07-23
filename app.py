@@ -6,18 +6,20 @@ st.set_page_config(
     layout="centered"
 )
 
+# CSS tùy chỉnh lại toàn bộ giao diện gọn gàng, tinh tế, loại bỏ khung thừa
 st.markdown("""
     <style>
         .block-container {
-            padding-top: 0.8rem;
-            padding-bottom: 0.8rem;
-            padding-left: 0.8rem;
-            padding-right: 0.8rem;
+            padding-top: 0.6rem;
+            padding-bottom: 0.6rem;
+            padding-left: 0.6rem;
+            padding-right: 0.6rem;
         }
-        h2 { font-size: 1.2rem !important; margin-bottom: 0px !important; text-align: center; color: #4da6ff; }
-        p, label, span { font-size: 0.8rem !important; }
+        h2 { font-size: 1.15rem !important; margin-bottom: -5px !important; text-align: center; color: #4da6ff; }
+        p, label, span { font-size: 0.78rem !important; }
         .stTextInput input { font-size: 1rem !important; padding: 2px !important; text-align: center; }
-        div.stButton > button { padding: 4px 8px !important; font-size: 0.85rem !important; font-weight: bold; width: 100%; }
+        div.stButton > button { padding: 4px 8px !important; font-size: 0.82rem !important; font-weight: bold; width: 100%; }
+        hr { margin: 6px 0px !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -34,8 +36,6 @@ if 'logs' not in st.session_state:
     st.session_state.logs = []
 if 'form_key' not in st.session_state:
     st.session_state.form_key = 0
-if 'input_val' not in st.session_state:
-    st.session_state.input_val = ""
 
 # ================= CÁC HÀM LOGIC =================
 def tinh_bong_duong(so_de):
@@ -60,7 +60,7 @@ def phan_tich_chien_thuat(an, gay):
         return "⏳ Chờ nhịp...", "gray"
 
 def hien_thi_roadmap_html(history, title):
-    st.markdown(f"<span style='font-size: 0.75rem; font-weight: bold;'>📊 {title}</span>", unsafe_allow_html=True)
+    st.markdown(f"<span style='font-size: 0.7rem; font-weight: bold;'>📊 {title}</span>", unsafe_allow_html=True)
     max_rows = 6
     grid = {}
     if history:
@@ -94,38 +94,35 @@ def hien_thi_roadmap_html(history, title):
     max_col = max([col for col, row in grid.keys()]) if grid else 0
     max_cols_display = max(10, max_col + 1)
     
-    html_content = "<div style='overflow-x: auto; background-color: #2d2d2d; padding: 2px; border-radius: 4px;'><table style='border-collapse: collapse; margin: auto;'>"
+    html_content = "<div style='overflow-x: auto; background-color: #262626; padding: 2px; border-radius: 4px;'><table style='border-collapse: collapse; margin: auto;'>"
     for r in range(6):
         html_content += "<tr>"
         for c in range(max_cols_display):
             val = grid.get((c, r), None)
             if val is True:
-                dot = "<div style='width: 6px; height: 6px; background-color: #00ff00; border-radius: 50%; margin: 1px;'></div>"
+                dot = "<div style='width: 5px; height: 5px; background-color: #00ff00; border-radius: 50%; margin: 1px;'></div>"
             elif val is False:
-                dot = "<div style='width: 6px; height: 6px; background-color: #ff4d4d; border-radius: 50%; margin: 1px;'></div>"
+                dot = "<div style='width: 5px; height: 5px; background-color: #ff4d4d; border-radius: 50%; margin: 1px;'></div>"
             else:
-                dot = "<div style='width: 6px; height: 6px; background-color: #3d3d3d; border-radius: 50%; margin: 1px;'></div>"
-            html_content += f"<td style='border: 1px solid #333333; width: 10px; height: 10px; text-align: center;'>{dot}</td>"
+                dot = "<div style='width: 5px; height: 5px; background-color: #333333; border-radius: 50%; margin: 1px;'></div>"
+            html_content += f"<td style='border: 1px solid #2a2a2a; width: 9px; height: 9px; text-align: center;'>{dot}</td>"
         html_content += "</tr>"
     html_content += "</table></div>"
     st.markdown(html_content, unsafe_allow_html=True)
 
-def update_input():
-    st.session_state.input_val = st.session_state.txt_so_de
-
 # ================= GIAO DIỆN CHÍNH =================
 st.markdown("<h2>🤖 Bot Tín Hiệu Siêu Tốc</h2>", unsafe_allow_html=True)
 
-# ----------------- Ô TRÊN: NHẬP SỐ & XEM KẾT QUẢ NGAY -----------------
-st.markdown("<div style='border: 1px solid #dcdcdc; padding: 10px; border-radius: 8px; margin-bottom: 8px;'>", unsafe_allow_html=True)
-so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", value=st.session_state.input_val, max_chars=2, placeholder="VD: 43", key="txt_so_de", on_change=update_input)
-current_so = st.session_state.input_val if st.session_state.input_val else so_de
+# ----------------- KHU VỰC 1: NHẬP SỐ & XEM KẾT QUẢ -----------------
+so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", max_chars=2, placeholder="VD: 25")
 
-if len(current_so) == 2 and current_so.isdigit():
-    d1_pre, d2_pre = tinh_bong_duong(current_so)
-    a1_pre, a2_pre = tinh_bong_am(current_so)
+if len(so_de) == 2 and so_de.isdigit():
+    d1_pre, d2_pre = tinh_bong_duong(so_de)
+    a1_pre, a2_pre = tinh_bong_am(so_de)
+    preview_active = True
 else:
     d1_pre, d2_pre, a1_pre, a2_pre = "--", "--", "--", "--"
+    preview_active = False
 
 col_d, col_a = st.columns(2)
 with col_d:
@@ -137,12 +134,14 @@ with col_a:
     st.markdown(f"🟠 **B.Âm: {a1_pre}, {a2_pre}**")
     th_a, color_a = phan_tich_chien_thuat(st.session_state.nhip_am['an'], st.session_state.nhip_am['gay'])
     st.markdown(f":{color_a}[{th_a}] (Ăn:{st.session_state.nhip_am['an']}|Gãy:{st.session_state.nhip_am['gay']})")
-st.markdown("</div>", unsafe_allow_html=True)
 
+if preview_active:
+    st.markdown(f"<div style='font-size: 0.73rem; color: #00ffcc; text-align: center; margin-top: -2px;'>👉 Đã nhận số {so_de}. Tích chọn 'Húp' bên dưới rồi bấm Chốt số!</div>", unsafe_allow_html=True)
 
-# ----------------- Ô DƯỚI: CHECKBOX & NÚT CHỐT (DÙNG FORM ĐỂ RESET SẠCH) -----------------
-st.markdown("<div style='border: 1px solid #dcdcdc; padding: 10px; border-radius: 8px;'>", unsafe_allow_html=True)
-with st.form(key=f"chot_form_{st.session_state.form_key}", clear_on_submit=True):
+st.markdown("<hr>", unsafe_allow_html=True)
+
+# ----------------- KHU VỰC 2: CHECKBOX & NÚT CHỐT (DÙNG FORM ĐỂ TỰ RESET) -----------------
+with st.form(key=f"chot_form_{st.session_state.form_key}"):
     f_col1, f_col2 = st.columns(2)
     with f_col1:
         win_duong = st.checkbox("Húp Dương 💰")
@@ -150,14 +149,15 @@ with st.form(key=f"chot_form_{st.session_state.form_key}", clear_on_submit=True)
         win_am = st.checkbox("Húp Âm 💰")
         
     submit_btn = st.form_submit_button(label="⚡ CHỐT SỐ & CẬP NHẬT KỲ MỚI", use_container_width=True)
-st.markdown("</div>", unsafe_allow_html=True)
 
-
-# Xử lý logic khi bấm nút Chốt ở ô dưới
+# Xử lý khi bấm nút Chốt
 if submit_btn:
-    if len(current_so) != 2 or not current_so.isdigit():
-        st.warning("Vui lòng nhập đủ 2 chữ số ĐB Kỳ trước ở ô trên!")
+    if len(so_de) != 2 or not so_de.isdigit():
+        st.warning("Vui lòng nhập đủ 2 chữ số ĐB Kỳ trước ở trên!")
     else:
+        d1_pre, d2_pre = tinh_bong_duong(so_de)
+        a1_pre, a2_pre = tinh_bong_am(so_de)
+
         # Cập nhật nhịp bóng dương
         if win_duong:
             st.session_state.nhip_duong['an'] += 1
@@ -183,18 +183,15 @@ if submit_btn:
             status_a_str = "lose"
             
         # Ghi log chuẩn định dạng yêu cầu
-        log_entry = f"số {current_so} - b.am:{a1_pre}-{a2_pre} - {status_a_str} - b.duong:{d1_pre}-{d2_pre} - {status_d_str}"
+        log_entry = f"số {so_de} - b.am:{a1_pre}-{a2_pre} - {status_a_str} - b.duong:{d1_pre}-{d2_pre} - {status_d_str}"
         st.session_state.logs.insert(0, log_entry)
         
-        # Reset sạch ô số ở trên và đổi key form để bỏ stick 100%
-        st.session_state.input_val = ""
-        if 'txt_so_de' in st.session_state:
-            del st.session_state['txt_so_de']
+        # Đổi key form để reset sạch form (bỏ stick 100%) và rerun lại trang
         st.session_state.form_key += 1
         st.rerun()
 
-# Roadmap thu nhỏ
-st.markdown("<hr style='margin: 3px 0px;'>", unsafe_allow_html=True)
+# Roadmap thu nhỏ tinh gọn
+st.markdown("<hr>", unsafe_allow_html=True)
 r_col1, r_col2 = st.columns(2)
 with r_col1:
     hien_thi_roadmap_html(st.session_state.history_duong, "ROADMAP BÓNG DƯƠNG")
@@ -202,11 +199,11 @@ with r_col2:
     hien_thi_roadmap_html(st.session_state.history_am, "ROADMAP BÓNG ÂM")
 
 # Gấp thếp & Nhật ký hoạt động
-st.markdown("<div style='font-size: 0.7rem; color: #ffcc00; text-align: center; margin-top: 3px;'>💡 Gấp thếp: 1k-3k-7k-16k-35k-70k-150k</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size: 0.68rem; color: #ffcc00; text-align: center; margin-top: 2px;'>💡 Gấp thếp: 1k-3k-7k-16k-35k-70k-150k</div>", unsafe_allow_html=True)
 
-st.markdown("<span style='font-size: 0.75rem; font-weight: bold;'>📝 Nhật Ký Hoạt Động</span>", unsafe_allow_html=True)
+st.markdown("<span style='font-size: 0.72rem; font-weight: bold;'>📝 Nhật Ký Hoạt Động</span>", unsafe_allow_html=True)
 if st.session_state.logs:
     logs_html = "<br>".join([f"• {log}" for log in st.session_state.logs[:4]])
-    st.markdown(f"<div style='font-size: 0.7rem; color: #cccccc; background-color: #222222; padding: 5px; border-radius: 4px;'>{logs_html}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='font-size: 0.68rem; color: #cccccc; background-color: #1e1e1e; padding: 4px; border-radius: 4px;'>{logs_html}</div>", unsafe_allow_html=True)
 else:
-    st.markdown("<div style='font-size: 0.7rem; color: #888888;'>Chưa có lịch sử chốt số.</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size: 0.68rem; color: #888888;'>Chưa có lịch sử chốt số.</div>", unsafe_allow_html=True)
