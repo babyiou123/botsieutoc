@@ -32,8 +32,8 @@ if 'nhip_am' not in st.session_state:
     st.session_state.nhip_am = {'an': 0, 'gay': 0}
 if 'logs' not in st.session_state:
     st.session_state.logs = []
-if 'clear_input' not in st.session_state:
-    st.session_state.clear_input = False
+if 'form_reset' not in st.session_state:
+    st.session_state.form_reset = False
 
 # ================= CÁC HÀM LOGIC =================
 def tinh_bong_duong(so_de):
@@ -111,11 +111,12 @@ def hien_thi_roadmap_html(history, title):
 # ================= GIAO DIỆN CHÍNH =================
 st.markdown("<h2>🤖 Bot Tín Hiệu Siêu Tốc</h2>", unsafe_allow_html=True)
 
-# Xử lý làm trống ô nhập liệu sau khi chốt
-default_val = "" if st.session_state.clear_input else ""
-st.session_state.clear_input = False
+# Xử lý reset trạng thái form
+if st.session_state.form_reset:
+    st.session_state.form_reset = False
 
-so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", value=default_val, max_chars=2, placeholder="VD: 26")
+# Ô nhập số ĐB Kỳ trước (sử dụng callback/key để tự động clear khi reset)
+so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", max_chars=2, placeholder="VD: 53", key="input_so_de")
 
 # Tính toán giá trị dự kiến
 if len(so_de) == 2 and so_de.isdigit():
@@ -133,13 +134,13 @@ with col_d:
     st.markdown(f"🔵 **B.Dương: {d1_pre}, {d2_pre}**")
     th_d, color_d = phan_tich_chien_thuat(st.session_state.nhip_duong['an'], st.session_state.nhip_duong['gay'])
     st.markdown(f":{color_d}[{th_d}] (Ăn:{st.session_state.nhip_duong['an']}|Gãy:{st.session_state.nhip_duong['gay']})")
-    win_duong = st.checkbox("Húp Dương 💰")
+    win_duong = st.checkbox("Húp Dương 💰", key="chk_duong")
 
 with col_a:
     st.markdown(f"🟠 **B.Âm: {a1_pre}, {a2_pre}**")
     th_a, color_a = phan_tich_chien_thuat(st.session_state.nhip_am['an'], st.session_state.nhip_am['gay'])
     st.markdown(f":{color_a}[{th_a}] (Ăn:{st.session_state.nhip_am['an']}|Gãy:{st.session_state.nhip_am['gay']})")
-    win_am = st.checkbox("Húp Âm 💰")
+    win_am = st.checkbox("Húp Âm 💰", key="chk_am")
 
 if preview_mode:
     st.markdown(f"<div style='font-size: 0.75rem; color: #00ffcc; text-align: center;'>👉 Đã nhận số {so_de}. Tích chọn 'Húp' rồi bấm nút Chốt số bên dưới để ghi nhận!</div>", unsafe_allow_html=True)
@@ -177,8 +178,12 @@ if st.button("⚡ CHỐT SỐ & CẬP NHẬT KỲ MỚI", use_container_width=Tr
         log_entry = f"số {so_de} - b.am:{a1_pre}-{a2_pre} - {status_a_str} - b.duong:{d1_pre}-{d2_pre} - {status_d_str}"
         st.session_state.logs.insert(0, log_entry)
         
-        # Bật cờ để làm trống ô nhập liệu và reset lại trang
-        st.session_state.clear_input = True
+        # Xóa sạch ô nhập số và reset các checkbox bằng cách xóa key trong session_state
+        for key in ['input_so_de', 'chk_duong', 'chk_am']:
+            if key in st.session_state:
+                del st.session_state[key]
+                
+        st.session_state.form_reset = True
         st.rerun()
 
 # Roadmap thu nhỏ
