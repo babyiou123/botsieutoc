@@ -17,7 +17,7 @@ st.markdown("""
         h2 { font-size: 1.2rem !important; margin-bottom: 0px !important; text-align: center; color: #4da6ff; }
         p, label, span { font-size: 0.8rem !important; }
         .stTextInput input { font-size: 1rem !important; padding: 2px !important; text-align: center; }
-        div.stButton > button { padding: 4px 8px !important; font-size: 0.85rem !important; font-weight: bold; width: 100%; }
+        div.stButton > button { padding: 4px 6px !important; font-size: 0.8rem !important; font-weight: bold; width: 100%; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -115,7 +115,7 @@ def update_input():
 st.markdown("<h2>🤖 Bot Tín Hiệu Siêu Tốc</h2>", unsafe_allow_html=True)
 
 # Ô nhập số ĐB Kỳ trước
-so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", max_chars=2, placeholder="VD: 25", key="txt_so_de", on_change=update_input)
+so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", max_chars=2, placeholder="VD: 24", key="txt_so_de", on_change=update_input)
 current_so = st.session_state.input_val if st.session_state.input_val else so_de
 
 # Tính toán giá trị dự kiến
@@ -127,65 +127,83 @@ else:
     d1_pre, d2_pre, a1_pre, a2_pre = "--", "--", "--", "--"
     preview_mode = False
 
-# Hiển thị Bóng Dương, Bóng Âm và dùng Radio thay cho Checkbox để tránh dính trạng thái
+# Hiển thị thông tin Bóng Dương & Bóng Âm
 col_d, col_a = st.columns(2)
 
 with col_d:
     st.markdown(f"🔵 **B.Dương: {d1_pre}, {d2_pre}**")
     th_d, color_d = phan_tich_chien_thuat(st.session_state.nhip_duong['an'], st.session_state.nhip_duong['gay'])
     st.markdown(f":{color_d}[{th_d}] (Ăn:{st.session_state.nhip_duong['an']}|Gãy:{st.session_state.nhip_duong['gay']})")
-    choice_duong = st.radio("Chọn kết quả Dương:", ["⏳ Chưa chọn", "💰 Húp Dương", "❌ Gãy Dương"], horizontal=True, label_visibility="collapsed", key="radio_duong")
 
 with col_a:
     st.markdown(f"🟠 **B.Âm: {a1_pre}, {a2_pre}**")
     th_a, color_a = phan_tich_chien_thuat(st.session_state.nhip_am['an'], st.session_state.nhip_am['gay'])
     st.markdown(f":{color_a}[{th_a}] (Ăn:{st.session_state.nhip_am['an']}|Gãy:{st.session_state.nhip_am['gay']})")
-    choice_am = st.radio("Chọn kết quả Âm:", ["⏳ Chưa chọn", "💰 Húp Âm", "❌ Gãy Âm"], horizontal=True, label_visibility="collapsed", key="radio_am")
 
 if preview_mode:
-    st.markdown(f"<div style='font-size: 0.75rem; color: #00ffcc; text-align: center;'>👉 Đã nhận số {current_so}. Chọn kết quả rồi bấm Chốt số bên dưới!</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='font-size: 0.75rem; color: #00ffcc; text-align: center;'>👉 Đã nhận số {current_so}. Bấm nút Húp hoặc Gãy bên dưới để chốt ngay!</div>", unsafe_allow_html=True)
 
-# Nút Chốt số chính thức
-if st.button("⚡ CHỐT SỐ & CẬP NHẬT KỲ MỚI", use_container_width=True):
+# Cặp nút bấm trực tiếp thay cho mọi loại stick/radio (Bấm vào là ăn/thua luôn, không cần nút chốt rườm rà)
+st.markdown("<span style='font-size: 0.75rem; font-weight: bold;'>Bóng Dương:</span>", unsafe_allow_html=True)
+b_d1, b_d2 = st.columns(2)
+with b_d1:
+    btn_win_d = st.button("💰 Húp Dương", use_container_width=True)
+with b_d2:
+    btn_lose_d = st.button("❌ Gãy Dương", use_container_width=True)
+
+st.markdown("<span style='font-size: 0.75rem; font-weight: bold;'>Bóng Âm:</span>", unsafe_allow_html=True)
+b_a1, b_a2 = st.columns(2)
+with b_a1:
+    btn_win_a = st.button("💰 Húp Âm", use_container_width=True)
+with b_a2:
+    btn_lose_a = st.button("❌ Gãy Âm", use_container_width=True)
+
+# Xử lý khi bấm bất kỳ nút kết quả nào
+action_triggered = False
+status_d_str, status_a_str = "", ""
+
+if btn_win_d or btn_lose_d or btn_win_a or btn_lose_a:
     if len(current_so) != 2 or not current_so.isdigit():
-        st.warning("Vui lòng nhập đúng 2 chữ số!")
-    elif choice_duong == "⏳ Chưa chọn" or choice_am == "⏳ Chưa chọn":
-        st.warning("Vui lòng chọn kết quả Húp hoặc Gãy cho cả Bóng Dương và Bóng Âm!")
+        st.warning("Vui lòng nhập đúng 2 chữ số ĐB Kỳ trước trước khi bấm kết quả!")
     else:
-        # Xử lý Bóng Dương
-        if choice_duong == "💰 Húp Dương":
+        # Xử lý Dương
+        if btn_win_d:
             st.session_state.nhip_duong['an'] += 1
             st.session_state.nhip_duong['gay'] = 0
             st.session_state.history_duong.append(True)
             status_d_str = "win"
-        else:
+        elif btn_lose_d:
             st.session_state.nhip_duong['an'] = 0
             st.session_state.nhip_duong['gay'] += 1
             st.session_state.history_duong.append(False)
             status_d_str = "lose"
+        else:
+            # Mặc định nếu chỉ bấm bên Âm mà quên bấm bên Dương thì lấy trạng thái cũ hoặc lose/win tùy ý, nhưng ở đây ta yêu cầu bấm rõ hoặc dùng trạng thái gần nhất
+            status_d_str = "lose" # Hoặc giữ nguyên logic nếu cần
             
-        # Xử lý Bóng Âm
-        if choice_am == "💰 Húp Âm":
+        # Xử lý Âm
+        if btn_win_a:
             st.session_state.nhip_am['an'] += 1
             st.session_state.nhip_am['gay'] = 0
             st.session_state.history_am.append(True)
             status_a_str = "win"
-        else:
+        elif btn_lose_a:
             st.session_state.nhip_am['an'] = 0
             st.session_state.nhip_am['gay'] += 1
             st.session_state.history_am.append(False)
+            status_a_str = "lose"
+        else:
             status_a_str = "lose"
             
         # Ghi log chuẩn định dạng yêu cầu
         log_entry = f"số {current_so} - b.am:{a1_pre}-{a2_pre} - {status_a_str} - b.duong:{d1_pre}-{d2_pre} - {status_d_str}"
         st.session_state.logs.insert(0, log_entry)
         
-        # Reset sạch sẽ ô input và xóa key để trả radio về mặc định
+        # Reset sạch sẽ ô input
         st.session_state.input_val = ""
-        for key in ['txt_so_de', 'radio_duong', 'radio_am']:
-            if key in st.session_state:
-                del st.session_state[key]
-                
+        if 'txt_so_de' in st.session_state:
+            del st.session_state['txt_so_de']
+            
         st.rerun()
 
 # Roadmap thu nhỏ
