@@ -32,10 +32,6 @@ if 'nhip_am' not in st.session_state:
     st.session_state.nhip_am = {'an': 0, 'gay': 0}
 if 'logs' not in st.session_state:
     st.session_state.logs = []
-if 'chk_duong_val' not in st.session_state:
-    st.session_state.chk_duong_val = False
-if 'chk_am_val' not in st.session_state:
-    st.session_state.chk_am_val = False
 
 # ================= CÁC HÀM LOGIC =================
 def tinh_bong_duong(so_de):
@@ -113,8 +109,8 @@ def hien_thi_roadmap_html(history, title):
 # ================= GIAO DIỆN CHÍNH =================
 st.markdown("<h2>🤖 Bot Tín Hiệu Siêu Tốc</h2>", unsafe_allow_html=True)
 
-# Ô nhập số ĐB Kỳ trước
-so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", max_chars=2, placeholder="VD: 57", key="input_so_de")
+# Ô nhập số ĐB Kỳ trước (không dùng key cố định để tự động xóa sạch khi reset)
+so_de = st.text_input("Nhập 2 số ĐB Kỳ trước:", max_chars=2, placeholder="VD: 23")
 
 # Tính toán giá trị dự kiến
 if len(so_de) == 2 and so_de.isdigit():
@@ -125,20 +121,20 @@ else:
     d1_pre, d2_pre, a1_pre, a2_pre = "--", "--", "--", "--"
     preview_mode = False
 
-# Hiển thị Bóng Dương, Bóng Âm và nút Húp chung 1 hàng
+# Hiển thị Bóng Dương, Bóng Âm và nút Húp chung 1 hàng (Không truyền value cố định, dùng key độc lập)
 col_d, col_a = st.columns(2)
 
 with col_d:
     st.markdown(f"🔵 **B.Dương: {d1_pre}, {d2_pre}**")
     th_d, color_d = phan_tich_chien_thuat(st.session_state.nhip_duong['an'], st.session_state.nhip_duong['gay'])
     st.markdown(f":{color_d}[{th_d}] (Ăn:{st.session_state.nhip_duong['an']}|Gãy:{st.session_state.nhip_duong['gay']})")
-    win_duong = st.checkbox("Húp Dương 💰", value=st.session_state.chk_duong_val, key="chk_duong")
+    win_duong = st.checkbox("Húp Dương 💰", key="widget_chk_duong")
 
 with col_a:
     st.markdown(f"🟠 **B.Âm: {a1_pre}, {a2_pre}**")
     th_a, color_a = phan_tich_chien_thuat(st.session_state.nhip_am['an'], st.session_state.nhip_am['gay'])
     st.markdown(f":{color_a}[{th_a}] (Ăn:{st.session_state.nhip_am['an']}|Gãy:{st.session_state.nhip_am['gay']})")
-    win_am = st.checkbox("Húp Âm 💰", value=st.session_state.chk_am_val, key="chk_am")
+    win_am = st.checkbox("Húp Âm 💰", key="widget_chk_am")
 
 if preview_mode:
     st.markdown(f"<div style='font-size: 0.75rem; color: #00ffcc; text-align: center;'>👉 Đã nhận số {so_de}. Tích chọn 'Húp' rồi bấm nút Chốt số bên dưới để ghi nhận!</div>", unsafe_allow_html=True)
@@ -176,10 +172,8 @@ if st.button("⚡ CHỐT SỐ & CẬP NHẬT KỲ MỚI", use_container_width=Tr
         log_entry = f"số {so_de} - b.am:{a1_pre}-{a2_pre} - {status_a_str} - b.duong:{d1_pre}-{d2_pre} - {status_d_str}"
         st.session_state.logs.insert(0, log_entry)
         
-        # Reset giá trị input và checkbox về trạng thái trống/bỏ stick
-        st.session_state.chk_duong_val = False
-        st.session_state.chk_am_val = False
-        for key in ['input_so_de', 'chk_duong', 'chk_am']:
+        # Xóa sạch trạng thái widget checkbox trong session_state để bỏ stick hoàn toàn
+        for key in ['widget_chk_duong', 'widget_chk_am']:
             if key in st.session_state:
                 del st.session_state[key]
                 
